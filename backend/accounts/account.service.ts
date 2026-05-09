@@ -24,9 +24,27 @@ export default {
 };
 
 async function authenticate({ email, password, ipAddress }: any) {
-    const account = await db.Account.scope('withHash').findOne({ where: { email } });
+    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanPassword = String(password).trim();
 
-    if (!account || !account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
+    const account = await db.Account.scope('withHash').findOne({
+        where: { email: cleanEmail }
+    });
+
+    if (!account) {
+        console.log('LOGIN FAILED: account not found:', cleanEmail);
+        throw 'Email or password is incorrect';
+    }
+
+    if (!account.isVerified) {
+        console.log('LOGIN FAILED: account not verified:', cleanEmail);
+        throw 'Email or password is incorrect';
+    }
+
+    const passwordMatch = await bcrypt.compare(cleanPassword, account.passwordHash);
+
+    if (!passwordMatch) {
+        console.log('LOGIN FAILED: password does not match:', cleanEmail);
         throw 'Email or password is incorrect';
     }
 
@@ -71,6 +89,8 @@ async function revokeToken({ token, ipAddress }: any) {
 }
 
 async function register(params: any, origin: any) {
+    params.email = String(params.email).trim().toLowerCase();
+
     if (await db.Account.findOne({ where: { email: params.email } })) {
         throw 'Email "' + params.email + '" is already registered';
     }
@@ -79,7 +99,9 @@ async function register(params: any, origin: any) {
 
     const isFirstAccount = (await db.Account.count()) === 0;
     account.role = isFirstAccount ? Role.Admin : Role.User;
-    account.verificationToken = randomTokenString();
+
+    account.verified = new Date();
+    account.verificationToken = null;
 
     account.passwordHash = await hash(params.password);
 
