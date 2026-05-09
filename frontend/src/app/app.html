@@ -3,16 +3,20 @@
 
   <div class="navbar-nav">
     <a class="nav-item nav-link" routerLink="/">Home</a>
+
     <a class="nav-item nav-link" routerLink="/profile">Profile</a>
 
-    <a
-      *ngIf="account.role === Role.Admin"
-      class="nav-item nav-link"
-      routerLink="/admin">
-      Admin
-    </a>
+    <button
+      type="button"
+      class="btn btn-link nav-item nav-link"
+      (click)="openAccounts()">
+      Accounts
+    </button>
 
-    <button class="btn btn-link nav-item nav-link" (click)="logout()">
+    <button
+      type="button"
+      class="btn btn-link nav-item nav-link"
+      (click)="logout()">
       Logout
     </button>
   </div>

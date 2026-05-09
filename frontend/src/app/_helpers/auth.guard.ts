@@ -20,6 +20,7 @@ export class AuthGuard implements CanActivate {
 
     if (account) {
       if (route.data['roles'] && !route.data['roles'].includes(account.role)) {
+        alert('Admin access only');
         this.router.navigate(['/']);
         return false;
       }
