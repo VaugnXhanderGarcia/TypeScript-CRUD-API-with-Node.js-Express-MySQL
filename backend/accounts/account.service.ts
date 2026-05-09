@@ -27,24 +27,37 @@ async function authenticate({ email, password, ipAddress }: any) {
     const cleanEmail = String(email).trim().toLowerCase();
     const cleanPassword = String(password).trim();
 
+    console.log('LOGIN ATTEMPT EMAIL:', cleanEmail);
+
     const account = await db.Account.scope('withHash').findOne({
         where: { email: cleanEmail }
     });
 
     if (!account) {
-        console.log('LOGIN FAILED: account not found:', cleanEmail);
+        console.log('LOGIN FAILED: account not found');
         throw 'Email or password is incorrect';
     }
 
+    console.log('LOGIN FOUND ACCOUNT:', {
+        id: account.id,
+        email: account.email,
+        role: account.role,
+        verified: account.verified,
+        isVerified: account.isVerified,
+        hasPasswordHash: !!account.passwordHash
+    });
+
     if (!account.isVerified) {
-        console.log('LOGIN FAILED: account not verified:', cleanEmail);
+        console.log('LOGIN FAILED: account not verified');
         throw 'Email or password is incorrect';
     }
 
     const passwordMatch = await bcrypt.compare(cleanPassword, account.passwordHash);
 
+    console.log('PASSWORD MATCH:', passwordMatch);
+
     if (!passwordMatch) {
-        console.log('LOGIN FAILED: password does not match:', cleanEmail);
+        console.log('LOGIN FAILED: password does not match');
         throw 'Email or password is incorrect';
     }
 
@@ -53,13 +66,14 @@ async function authenticate({ email, password, ipAddress }: any) {
 
     await refreshToken.save();
 
+    console.log('LOGIN SUCCESS:', cleanEmail);
+
     return {
         ...basicDetails(account),
         jwtToken,
         refreshToken: refreshToken.token
     };
 }
-
 async function refreshToken({ token, ipAddress }: any) {
     const refreshToken = await getRefreshToken(token);
     const account = await refreshToken.getAccount();
@@ -100,14 +114,17 @@ async function register(params: any, origin: any) {
     const isFirstAccount = (await db.Account.count()) === 0;
     account.role = isFirstAccount ? Role.Admin : Role.User;
 
+    account.passwordHash = await hash(params.password);
+
+    // AUTO VERIFY ACCOUNT BECAUSE EMAIL SENDING IS DISABLED
     account.verified = new Date();
     account.verificationToken = null;
 
-    account.passwordHash = await hash(params.password);
+    console.log('AUTO VERIFIED NEW ACCOUNT:', account.email, account.role);
 
     await account.save();
 
-    // Email sending temporarily disabled for beginner testing
+    // Email sending is disabled for this local activity
     // await sendVerificationEmail(account, origin);
 }
 
