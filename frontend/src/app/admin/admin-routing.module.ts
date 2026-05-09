@@ -1,12 +1,20 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AdminComponent } from './admin.component';
+import { LayoutComponent } from './layout.component';
+import { OverviewComponent } from './overview.component';
+
+const accountsModule = () =>
+  import('./accounts/accounts.module').then(x => x.AccountsModule);
 
 const routes: Routes = [
   {
     path: '',
-    component: AdminComponent
+    component: LayoutComponent,
+    children: [
+      { path: '', component: OverviewComponent },
+      { path: 'accounts', loadChildren: accountsModule }
+    ]
   }
 ];
 

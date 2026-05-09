@@ -1,12 +1,18 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { ProfileComponent } from './profile.component';
+import { LayoutComponent } from './layout.component';
+import { DetailsComponent } from './details.component';
+import { UpdateComponent } from './update.component';
 
 const routes: Routes = [
   {
     path: '',
-    component: ProfileComponent
+    component: LayoutComponent,
+    children: [
+      { path: '', component: DetailsComponent },
+      { path: 'update', component: UpdateComponent }
+    ]
   }
 ];
 
